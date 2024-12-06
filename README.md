@@ -1,4 +1,4 @@
-# Book Search Engine
+# My Library Bookie
 
 ## Description
 A MERN stack application that allows users to search for books via the Google Books API. Users can create an account, search for books, and save their favorite books to their profile. The application uses GraphQL API with Apollo Server, replacing the existing RESTful API.
@@ -91,5 +91,5 @@ This project is licensed under the MIT License.
 For any questions, please contact [Your Name] at [matt.chance176@gmail.com].
 
 ## Links
-- [Deployed Application]https://book-search-engine-l7ke.onrender.com
-- [GitHub Repository](git@github.com:Mchance176/Book-Search-Engine.git) 
+- [Deployed Application]
+- [GitHub Repository]() 
