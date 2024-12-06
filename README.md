@@ -88,8 +88,8 @@ npm run develop
 This project is licensed under the MIT License.
 
 ## Questions
-For any questions, please contact [Your Name] at [matt.chance176@gmail.com].
+For any questions, please contact at []
 
 ## Links
 - [Deployed Application]
-- [GitHub Repository]() 
+- [GitHub Repository](https://github.com/BriannaVitan/my-library-bookie.git) 
