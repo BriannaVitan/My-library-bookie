@@ -40,6 +40,9 @@ export const SAVE_BOOK = gql`
         title
         image
         link
+        rating
+        averageRating
+        totalRatings
       }
     }
   }
@@ -59,7 +62,22 @@ export const REMOVE_BOOK = gql`
         title
         image
         link
+        rating
+        averageRating
+        totalRatings
       }
+    }
+  }
+`;
+
+export const RATE_BOOK = gql`
+  mutation rateBook($bookId: String!, $rating: Int!) {
+    rateBook(bookId: $bookId, rating: $rating) {
+      bookId
+      title
+      rating
+      averageRating
+      totalRatings
     }
   }
 `;

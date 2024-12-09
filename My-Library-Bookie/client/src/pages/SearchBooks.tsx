@@ -1,19 +1,21 @@
 import { useState } from 'react';
 import { useMutation } from '@apollo/client';
 import { Container, Col, Form, Button, Card, Row } from 'react-bootstrap';
-import { SAVE_BOOK } from '../utils/mutations';
+import { SAVE_BOOK, RATE_BOOK } from '../utils/mutations';
 import { saveBookIds, getSavedBookIds } from '../utils/localStorage';
 import Auth from '../utils/auth';
+import StarRating from '../components/StarRating/StarRating';
+import { BookType } from '../types/book';
 
 const SearchBooks = () => {
-  const [searchedBooks, setSearchedBooks] = useState<any[]>([]);
+  const [searchedBooks, setSearchedBooks] = useState<BookType[]>([]);
   const [searchInput, setSearchInput] = useState('');
-  const [savedBookIds, setSavedBookIds] = useState(getSavedBookIds());
+  const [savedBookIds, setSavedBookIds] = useState<string[]>(getSavedBookIds());
 
-  // Set up mutation
+  // Set up mutations
   const [saveBook] = useMutation(SAVE_BOOK);
+  const [rateBook] = useMutation(RATE_BOOK);
 
-  // Function to handle form submission
   const handleFormSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
@@ -38,7 +40,9 @@ const SearchBooks = () => {
         title: book.volumeInfo.title,
         description: book.volumeInfo.description,
         image: book.volumeInfo.imageLinks?.thumbnail || '',
-        link: book.volumeInfo.infoLink
+        link: book.volumeInfo.infoLink,
+        averageRating: book.volumeInfo.averageRating || 0,
+        totalRatings: book.volumeInfo.ratingsCount || 0
       }));
 
       setSearchedBooks(bookData);
@@ -48,12 +52,11 @@ const SearchBooks = () => {
     }
   };
 
-  // Function to handle saving a book
   const handleSaveBook = async (bookId: string) => {
     const bookToSave = searchedBooks.find((book) => book.bookId === bookId);
     const token = Auth.loggedIn() ? Auth.getToken() : null;
 
-    if (!token) {
+    if (!token || !bookToSave) {
       return false;
     }
 
@@ -62,9 +65,38 @@ const SearchBooks = () => {
         variables: { bookData: bookToSave }
       });
 
-      // Save book ID to state and localStorage
       setSavedBookIds([...savedBookIds, bookToSave.bookId]);
       saveBookIds([...savedBookIds, bookToSave.bookId]);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleRateBook = async (bookId: string, rating: number) => {
+    const token = Auth.loggedIn() ? Auth.getToken() : null;
+
+    if (!token) {
+      return false;
+    }
+
+    try {
+      await rateBook({
+        variables: { bookId, rating }
+      });
+
+      // Update the local state with the new rating
+      setSearchedBooks(books => 
+        books.map(book => 
+          book.bookId === bookId 
+            ? { 
+                ...book, 
+                rating,
+                averageRating: ((book.averageRating || 0) * (book.totalRatings || 0) + rating) / ((book.totalRatings || 0) + 1),
+                totalRatings: (book.totalRatings || 0) + 1
+              }
+            : book
+        )
+      );
     } catch (err) {
       console.error(err);
     }
@@ -115,10 +147,19 @@ const SearchBooks = () => {
                     <Card.Title>{book.title}</Card.Title>
                     <p className='small'>Authors: {book.authors.join(', ')}</p>
                     <Card.Text>{book.description}</Card.Text>
+                    <div className="rating-section">
+                      <StarRating
+                        initialRating={book.rating}
+                        onRatingChange={(rating) => handleRateBook(book.bookId, rating)}
+                      />
+                      <span className="rating-count">
+                        ({book.totalRatings} ratings, avg: {book.averageRating?.toFixed(1)})
+                      </span>
+                    </div>
                     {Auth.loggedIn() && (
                       <Button
                         disabled={savedBookIds?.includes(book.bookId)}
-                        className='btn-block btn-info'
+                        className='btn-block btn-info mt-2'
                         onClick={() => handleSaveBook(book.bookId)}>
                         {savedBookIds?.includes(book.bookId)
                           ? 'This book has already been saved!'
