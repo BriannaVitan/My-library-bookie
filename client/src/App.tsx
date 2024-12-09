@@ -1,14 +1,17 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
+import SearchBooks from './pages/SearchBooks';
+import './App.css';
 
 function App() {
   return (
     <div className="App">
       <Navbar />
-      <main>
-        <h1>Welcome to My Library Bookie</h1>
-      </main>
+      <Routes>
+        <Route path="/" element={<SearchBooks />} />
+        {/* Add other routes as needed */}
+      </Routes>
     </div>
   );
 }
