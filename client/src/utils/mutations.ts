@@ -40,6 +40,12 @@ export const SAVE_BOOK = gql`
         title
         image
         link
+<<<<<<< HEAD
+=======
+        rating
+        averageRating
+        totalRatings
+>>>>>>> 08a4a89a73adfb3298c0352d1be62a5fcc3db371
       }
     }
   }
@@ -59,7 +65,28 @@ export const REMOVE_BOOK = gql`
         title
         image
         link
+<<<<<<< HEAD
       }
     }
   }
+=======
+        rating
+        averageRating
+        totalRatings
+      }
+    }
+  }
+`;
+
+export const RATE_BOOK = gql`
+  mutation rateBook($bookId: String!, $rating: Int!) {
+    rateBook(bookId: $bookId, rating: $rating) {
+      bookId
+      title
+      rating
+      averageRating
+      totalRatings
+    }
+  }
+>>>>>>> 08a4a89a73adfb3298c0352d1be62a5fcc3db371
 `;
