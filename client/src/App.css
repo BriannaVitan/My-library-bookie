@@ -40,6 +40,8 @@
 .read-the-docs {
   color: #888;
 }
+<<<<<<< HEAD
+=======
 
 .App {
   min-height: 100vh;
@@ -99,3 +101,4 @@
 .fade-in {
   animation: fadeIn 0.3s ease-in;
 }
+>>>>>>> 08a4a89a73adfb3298c0352d1be62a5fcc3db371

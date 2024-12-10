@@ -1,9 +1,20 @@
+
 export interface Rating {
   userId: string;
   rating: number;
 }
 
+
 export interface Book {
+  authors: string[],
+  description: string;
+  bookId: string;
+  image: string;
+  link: string;
+  title: string;
+}
+
+export interface BookType {
   bookId: string;
   authors: string[];
   title: string;
@@ -31,3 +42,4 @@ export interface GoogleBookResponse {
 export interface SavedBookIds {
   [key: string]: boolean;
 }
+
