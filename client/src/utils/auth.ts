@@ -1,29 +1,46 @@
+interface DecodedToken {
+  exp: number;
+  data: {
+    _id: string;
+    username: string;
+    email: string;
+  };
+}
+
 class Auth {
-  static loggedIn(): boolean {
-    const token = this.getToken();
-    return !!token && !this.isTokenExpired(token);
+  public getToken() {
+    return localStorage.getItem('id_token');
   }
 
-  static logout(): void {
+  public getProfile() {
+    const token = this.getToken();
+    if (!token) return null;
+    try {
+      return JSON.parse(atob(token.split('.')[1])) as DecodedToken;
+    } catch (err) {
+      console.error('Error decoding token:', err);
+      return null;
+    }
+  }
+
+  loggedIn() {
+    const token = this.getToken();
+    return token && !this.isTokenExpired(token);
+  }
+
+  logout(): void {
     localStorage.removeItem('id_token');
     window.location.assign('/');
   }
 
-  private static getToken(): string | null {
-    return localStorage.getItem('id_token');
-  }
-
-  private static isTokenExpired(token: string): boolean {
+  private isTokenExpired(token: string): boolean {
     try {
-      const decoded: any = JSON.parse(atob(token.split('.')[1]));
-      if (decoded.exp < Date.now() / 1000) {
-        return true;
-      }
-      return false;
-    } catch (err) {
+      const decoded = JSON.parse(atob(token.split('.')[1])) as DecodedToken;
+      return decoded.exp < Date.now() / 1000;
+    } catch (_err) {
       return false;
     }
   }
 }
 
-export default Auth;
+export default new Auth();

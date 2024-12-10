@@ -1,153 +1,53 @@
-import User from '../models/User.js';
-import { signToken } from '../services/auth.js';
-import { GraphQLError } from 'graphql';
-import Review from '../models/Book.js';
-import mongoose from 'mongoose';
-import bcrypt from 'bcrypt';
+import { IResolvers } from '@graphql-tools/utils';
+import { AuthenticationError, UserInputError } from 'apollo-server-express';
+import { Book } from '../models/Book';
+import { User } from '../models/User';
 
-// Interfaces for better type safety
-interface Context {
-  user?: {
-    _id: string;
-    username: string;
-    email: string;
-  } | null;
-}
-
-interface Book {
-  bookId: string;
-  authors?: string[];
-  description?: string;
-  title: string;
-  image?: string;
-  link?: string;
-  review?: string;
-}
-
-interface BookInput {
-  bookData: Book;
-}
-
-interface UserInput {
-  username: string;
-  email: string;
-  password: string;
-}
-
-interface LoginInput {
-  email: string;
-  password: string;
-}
-
-
-const resolvers = {
+const resolvers: IResolvers = {
   Query: {
-    me: async (_: unknown, __: unknown, context: Context) => {
-      if (!context.user) {
-        throw new GraphQLError('Not authenticated');
+    // Existing query resolvers
+    me: async (_parent, _args, context) => {
+      if (context.user) {
+        const userData = await User.findById(context.user._id)
+          .select('-__v -password');
+        return userData;
       }
-      
-      const user = await User.findOne({ _id: context.user._id });
-      if (!user) {
-        throw new GraphQLError('User not found');
-      }
-      
-      return user;
+      throw new AuthenticationError('Not logged in');
     },
+    // Add other queries as needed
   },
-
   Mutation: {
-    addUser: async (_: unknown, { username, email, password }: UserInput) => {
-      const user = await User.create({ username, email, password });
-      const token = signToken({ 
-        username: user.username, 
-        email: user.email, 
-        _id: user._id 
-      });
-      return { token, user };
-    },
-  
-    login: async (_: unknown, { email, password }: LoginInput) => {
-      const user = await User.findOne({ email });
-      if (!user) {
-        throw new GraphQLError('User not found');
-      }
-  
-      const correctPw = await user.isCorrectPassword(password);
-      if (!correctPw) {
-        throw new GraphQLError('Incorrect credentials');
-      }
-  
-      const token = signToken({ 
-        username: user.username, 
-        email: user.email, 
-        _id: user._id 
-      });
-      return { token, user };
-    },
-
-    saveBook: async (_: unknown, { bookData }: BookInput, context: Context) => {
-      if (!context.user) {
-        throw new GraphQLError('Not authenticated');
-      }
-
-      try {
-        const updatedUser = await User.findByIdAndUpdate(
-          context.user._id,
-          { $addToSet: { savedBooks: bookData } },
-          { new: true, runValidators: true }
-        );
-        
-        if (!updatedUser) {
-          throw new GraphQLError('User not found');
+    // Existing mutation resolvers
+    rateBook: async (_parent, { bookId, rating }, context) => {
+      if (context.user) {
+        // Validate rating input
+        if (rating < 1 || rating > 5) {
+          throw new UserInputError('Rating must be between 1 and 5');
         }
-        
-        return updatedUser;
-      } catch (err) {
-        throw new GraphQLError('Error saving book');
+
+        // Find the book by bookId
+        const book = await Book.findOne({ bookId });
+
+        if (!book) {
+          throw new UserInputError('Book not found');
+        }
+
+        // Append the new rating
+        book.ratings.push(rating);
+
+        // Update averageRating and totalRatings
+        book.totalRatings = book.ratings.length;
+        book.averageRating = book.ratings.reduce((a, b) => a + b, 0) / book.totalRatings;
+
+        // Save the updated book
+        await book.save();
+
+        return book;
       }
+      throw new AuthenticationError('You need to be logged in to rate a book');
     },
-
-    removeBook: async (_: unknown, { bookId }: { bookId: string }, context: Context) => {
-      if (!context.user) {
-        throw new GraphQLError('Not authenticated');
-      }
-
-      const updatedUser = await User.findOneAndUpdate(
-        { _id: context.user._id },
-        { $pull: { savedBooks: { bookId } } },
-        { new: true }
-      );
-
-      if (!updatedUser) {
-        throw new GraphQLError('User not found');
-      }
-
-      return updatedUser;
-    },
-    addReview: async (_: unknown, { bookId, review }: { bookId: string, review: string }, context: Context) => {
-      if (!context.user) {
-        throw new GraphQLError('Not authenticated');
-      }
-  
-      const user = await User.findOne({ _id: context.user._id });
-      if (!user) {
-        throw new GraphQLError('User not found');
-      }
-  
-      const bookIndex = user.savedBooks.findIndex(book => book.bookId === bookId);
-      if (bookIndex === -1) {
-        throw new GraphQLError('Book not found in saved books');
-      }
-  
-      user.savedBooks[bookIndex].review = review;
-      await user.save();
-  
-      return user;
-    },
+    // Add other mutations as needed
   },
 };
 
-
 export default resolvers;
-
