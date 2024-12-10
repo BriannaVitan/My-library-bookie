@@ -1,115 +1,116 @@
 import { useQuery, useMutation } from '@apollo/client';
 import { Container, Card, Button, Row, Col } from 'react-bootstrap';
-import { GET_ME } from '../utils/queries';
-import { REMOVE_BOOK } from '../utils/mutations';
+import { GET_ME } from '../utils/queries'; 
+import { REMOVE_BOOK } from '../utils/mutations'; 
 import Auth from '../utils/auth';
 import { removeBookId } from '../utils/localStorage';
-
-// Define interfaces for type safety
-interface Book {
-  bookId: string;
-  authors?: string[];
-  description: string;
-  title: string;
-  image?: string;
-  link?: string;
-}
-
-interface User {
-  _id: string;
-  username: string;
-  email: string;
-  savedBooks: Book[];
-}
-
-interface MeData {
-  me: User;
-}
+import type { User } from '../models/User';
+import type { Book } from '../models/Book';
 
 const SavedBooks = () => {
-  const { loading, data } = useQuery<MeData>(GET_ME);
-  const [removeBook] = useMutation(REMOVE_BOOK);
+  const { loading, data, error, refetch } = useQuery<{ me: User }>(GET_ME);
+  const userData = data?.me || { username: '', email: '', password: '', savedBooks: [] };
+  console.log('Response from Apollo GET_ME query:', { loading, data, error });
+  console.log('userData from GET_ME',userData);
 
-  const userData = data?.me || {} as User;
-
-  const handleDeleteBook = async (bookId: string) => {
-    const token = Auth.loggedIn() ? Auth.getToken() : null;
-
-    if (!token) {
-      return false;
+  const [removeBook] = useMutation(REMOVE_BOOK, {
+    update(cache, { data: { removeBook } }) {
+      // Read the current GET_ME query from the cache
+      const cachedData = cache.readQuery<{ me: User }>({ query: GET_ME }) || { me: { savedBooks: [] } };
+      if (cachedData.me && cachedData.me.savedBooks) {
+        // Write the updated data back to the cache
+        cache.writeQuery({
+          query: GET_ME,
+          data: {
+            me: {
+              ...cachedData.me,
+              savedBooks: cachedData.me.savedBooks.filter(
+                (book: Book) => book.bookId !== removeBook.bookId
+              ),
+            },
+          },
+        });
+      }
+    },
+    onCompleted: () => {
+      refetch();
     }
+  });
 
+  // Handle book deletion
+  const handleDeleteBook = async (bookId: string) => {
     try {
+      const token = Auth.loggedIn() ? Auth.getToken() : null;
+
+
+      if (!token) {
+        throw new Error('token is missing!');
+      }
+
+      // Execute the removeBook mutation
       await removeBook({
         variables: { bookId },
-        update: (cache) => {
-          const existingData = cache.readQuery<MeData>({ query: GET_ME });
-          if (existingData?.me) {
-            cache.writeQuery({
-              query: GET_ME,
-              data: {
-                me: {
-                  ...existingData.me,
-                  savedBooks: existingData.me.savedBooks.filter(
-                    (book) => book.bookId !== bookId
-                  ),
-                },
-              },
-            });
-          }
-        },
       });
 
+      // Remove the book ID from localStorage
       removeBookId(bookId);
+      return;
     } catch (err) {
       console.error(err);
     }
   };
 
-  if (loading) {
-    return <h2>LOADING...</h2>;
-  }
+  // Handle loading and error states
+  if (loading) return <h2>Loading...</h2>;
+  if (error) return <h2>Error: {error.message}</h2>;
 
   return (
     <>
-      <div className="text-light bg-dark p-5">
+      <div className='text-light bg-dark p-5'>
         <Container>
-          <h1>Viewing saved books!</h1>
+          {userData.username ? (
+            <h1>Viewing {userData.username}'s saved books!</h1>
+          ) : (
+            <h1>Viewing saved books!</h1>
+          )}
         </Container>
       </div>
       <Container>
         <h2 className='pt-5'>
           {userData.savedBooks?.length
-            ? `Viewing ${userData.savedBooks.length} saved ${
-                userData.savedBooks.length === 1 ? 'book' : 'books'
-              }:`
+            ? `Viewing ${userData.savedBooks.length} saved ${userData.savedBooks.length === 1 ? 'book' : 'books'
+            }`
             : 'You have no saved books!'}
         </h2>
         <Row>
-          {userData.savedBooks?.map((book: Book) => (
-            <Col md={4} key={book.bookId}>
-              <Card border='dark'>
-                {book.image && (
-                  <Card.Img
-                    src={book.image}
-                    alt={`The cover for ${book.title}`}
-                    variant='top'
-                  />
-                )}
-                <Card.Body>
-                  <Card.Title>{book.title}</Card.Title>
-                  <p className='small'>Authors: {book.authors?.join(', ')}</p>
-                  <Card.Text>{book.description}</Card.Text>
-                  <Button
-                    className='btn-block btn-danger'
-                    onClick={() => handleDeleteBook(book.bookId)}
-                  >
-                    Delete this Book!
-                  </Button>
-                </Card.Body>
-              </Card>
-            </Col>
-          ))}
+          {userData.savedBooks?.map((book) => {
+            return (
+              <Col key={book.bookId} md='4'>
+                <Card border='dark'>
+                  {book.image ? (
+                    <Card.Img
+                      src={book.image}
+                      alt={`The cover for ${book.title}`}
+                      variant='top'
+                    />
+                  ) : null}
+                  <Card.Body>
+                    <Card.Title>{book.title}</Card.Title>
+                    <p className='small'>Authors: {book.authors?.join(', ')}</p>
+                    <Card.Text>{book.description}</Card.Text>
+                    <Button
+                      className='btn-block btn-danger'
+                      onClick={() => handleDeleteBook(book.bookId)}
+                    >
+                      Delete this Book!
+                    </Button>
+                  </Card.Body>
+                </Card>
+              </Col>
+            )
+          }
+          )}
+
         </Row>
       </Container>
     </>

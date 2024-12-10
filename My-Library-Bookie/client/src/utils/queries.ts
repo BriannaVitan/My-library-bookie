@@ -15,6 +15,7 @@ export const GET_ME = gql`
         image
         link
       }
+        bookCount
     }
   }
 `; 
