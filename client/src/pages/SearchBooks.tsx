@@ -2,6 +2,24 @@
 import { useState } from 'react';
 import { useMutation } from '@apollo/client';
 import { Container, Col, Form, Button, Card, Row } from 'react-bootstrap';
+import { SAVE_BOOK } from '../utils/mutations';
+import { saveBookIds, getSavedBookIds } from '../utils/localStorage';
+import Auth from '../utils/auth';
+
+const SearchBooks = () => {
+  const [searchedBooks, setSearchedBooks] = useState<any[]>([]);
+  const [searchInput, setSearchInput] = useState('');
+  const [savedBookIds, setSavedBookIds] = useState(getSavedBookIds());
+
+  // Set up mutation
+  const [saveBook] = useMutation(SAVE_BOOK);
+
+  // Function to handle form submission
+=======
+<<<<<<< HEAD
+import { useState } from 'react';
+import { useMutation } from '@apollo/client';
+import { Container, Col, Form, Button, Card, Row } from 'react-bootstrap';
 import { SAVE_BOOK, RATE_BOOK } from '../utils/mutations';
 import { saveBookIds, getSavedBookIds } from '../utils/localStorage';
 import Auth from '../utils/auth';
@@ -36,15 +54,21 @@ const SearchBooks = () => {
 
   // Handle form submission
 >>>>>>> 0d1497f (added responsive design)
+>>>>>>> 08a4a89a73adfb3298c0352d1be62a5fcc3db371
   const handleFormSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
     if (!searchInput) {
 <<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> 08a4a89a73adfb3298c0352d1be62a5fcc3db371
       return false;
     }
 
     try {
+<<<<<<< HEAD
+=======
 =======
       return;
     }
@@ -52,6 +76,7 @@ const SearchBooks = () => {
     try {
       setLoading(true);
 >>>>>>> 0d1497f (added responsive design)
+>>>>>>> 08a4a89a73adfb3298c0352d1be62a5fcc3db371
       const response = await fetch(
         `https://www.googleapis.com/books/v1/volumes?q=${searchInput}`
       );
@@ -69,18 +94,28 @@ const SearchBooks = () => {
         description: book.volumeInfo.description,
         image: book.volumeInfo.imageLinks?.thumbnail || '',
 <<<<<<< HEAD
+        link: book.volumeInfo.infoLink
+=======
+<<<<<<< HEAD
         link: book.volumeInfo.infoLink,
         averageRating: book.volumeInfo.averageRating || 0,
         totalRatings: book.volumeInfo.ratingsCount || 0
 =======
         link: book.volumeInfo.infoLink
 >>>>>>> 0d1497f (added responsive design)
+>>>>>>> 08a4a89a73adfb3298c0352d1be62a5fcc3db371
       }));
 
       setSearchedBooks(bookData);
       setSearchInput('');
     } catch (err) {
       console.error(err);
+<<<<<<< HEAD
+    }
+  };
+
+  // Function to handle saving a book
+=======
 <<<<<<< HEAD
     }
   };
@@ -93,16 +128,22 @@ const SearchBooks = () => {
 
   // Handle saving a book
 >>>>>>> 0d1497f (added responsive design)
+>>>>>>> 08a4a89a73adfb3298c0352d1be62a5fcc3db371
   const handleSaveBook = async (bookId: string) => {
     const bookToSave = searchedBooks.find((book) => book.bookId === bookId);
     const token = Auth.loggedIn() ? Auth.getToken() : null;
 
+<<<<<<< HEAD
+    if (!token) {
+      return false;
+=======
     if (!token || !bookToSave) {
 <<<<<<< HEAD
       return false;
 =======
       return;
 >>>>>>> 0d1497f (added responsive design)
+>>>>>>> 08a4a89a73adfb3298c0352d1be62a5fcc3db371
     }
 
     try {
@@ -110,14 +151,22 @@ const SearchBooks = () => {
         variables: { bookData: bookToSave }
       });
 
+<<<<<<< HEAD
+      // Save book ID to state and localStorage
+      setSavedBookIds([...savedBookIds, bookToSave.bookId]);
+=======
       setSavedBookIds([...savedBookIds, bookToSave.bookId]);
 <<<<<<< HEAD
+>>>>>>> 08a4a89a73adfb3298c0352d1be62a5fcc3db371
       saveBookIds([...savedBookIds, bookToSave.bookId]);
     } catch (err) {
       console.error(err);
     }
   };
 
+<<<<<<< HEAD
+  return (
+=======
   const handleRateBook = async (bookId: string, rating: number) => {
     const token = Auth.loggedIn() ? Auth.getToken() : null;
 
@@ -152,12 +201,15 @@ const SearchBooks = () => {
 
   return (
 <<<<<<< HEAD
+>>>>>>> 08a4a89a73adfb3298c0352d1be62a5fcc3db371
     <>
       <div className="text-light bg-dark p-5">
         <Container>
           <h1>Search for Books!</h1>
           <Form onSubmit={handleFormSubmit}>
             <Row>
+<<<<<<< HEAD
+=======
 =======
     <div className="fade-in">
       <div className="search-header text-light bg-dark p-4 p-md-5">
@@ -166,6 +218,7 @@ const SearchBooks = () => {
           <Form onSubmit={handleFormSubmit}>
             <Row className="g-3">
 >>>>>>> 0d1497f (added responsive design)
+>>>>>>> 08a4a89a73adfb3298c0352d1be62a5fcc3db371
               <Col xs={12} md={8}>
                 <Form.Control
                   name='searchInput'
@@ -175,11 +228,16 @@ const SearchBooks = () => {
                   size='lg'
                   placeholder='Search for a book'
 <<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> 08a4a89a73adfb3298c0352d1be62a5fcc3db371
                 />
               </Col>
               <Col xs={12} md={4}>
                 <Button type='submit' variant='success' size='lg'>
                   Submit Search
+<<<<<<< HEAD
+=======
 =======
                   className="w-100"
                 />
@@ -194,6 +252,7 @@ const SearchBooks = () => {
                 >
                   {loading ? 'Searching...' : 'Submit Search'}
 >>>>>>> 0d1497f (added responsive design)
+>>>>>>> 08a4a89a73adfb3298c0352d1be62a5fcc3db371
                 </Button>
               </Col>
             </Row>
@@ -202,6 +261,9 @@ const SearchBooks = () => {
       </div>
 
 <<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> 08a4a89a73adfb3298c0352d1be62a5fcc3db371
       <Container>
         <h2 className='pt-5'>
           {searchedBooks.length
@@ -220,6 +282,12 @@ const SearchBooks = () => {
                     <Card.Title>{book.title}</Card.Title>
                     <p className='small'>Authors: {book.authors.join(', ')}</p>
                     <Card.Text>{book.description}</Card.Text>
+<<<<<<< HEAD
+                    {Auth.loggedIn() && (
+                      <Button
+                        disabled={savedBookIds?.includes(book.bookId)}
+                        className='btn-block btn-info'
+=======
                     <div className="rating-section">
                       <StarRating
                         initialRating={book.rating}
@@ -233,6 +301,7 @@ const SearchBooks = () => {
                       <Button
                         disabled={savedBookIds?.includes(book.bookId)}
                         className='btn-block btn-info mt-2'
+>>>>>>> 08a4a89a73adfb3298c0352d1be62a5fcc3db371
                         onClick={() => handleSaveBook(book.bookId)}>
                         {savedBookIds?.includes(book.bookId)
                           ? 'This book has already been saved!'
@@ -247,6 +316,8 @@ const SearchBooks = () => {
         </Row>
       </Container>
     </>
+<<<<<<< HEAD
+=======
 =======
       <Container className="py-4">
         {loading ? (
@@ -302,6 +373,7 @@ const SearchBooks = () => {
       </Container>
     </div>
 >>>>>>> 0d1497f (added responsive design)
+>>>>>>> 08a4a89a73adfb3298c0352d1be62a5fcc3db371
   );
 };
 

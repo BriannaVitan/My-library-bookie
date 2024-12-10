@@ -1,7 +1,9 @@
 import User from '../models/User.js';
 import { signToken } from '../services/auth.js';
 import { GraphQLError } from 'graphql';
-import { Types } from 'mongoose';
+import Review from '../models/Book.js';
+import mongoose from 'mongoose';
+import bcrypt from 'bcrypt';
 
 // Interfaces for better type safety
 interface Context {
@@ -19,6 +21,7 @@ interface Book {
   title: string;
   image?: string;
   link?: string;
+  review?: string;
 }
 
 interface BookInput {
@@ -36,13 +39,6 @@ interface LoginInput {
   password: string;
 }
 
-interface UserDocument {
-  _id: Types.ObjectId;
-  username: string;
-  email: string;
-  password: string;
-  isCorrectPassword(password: string): Promise<boolean>;
-}
 
 const resolvers = {
   Query: {
@@ -89,7 +85,6 @@ const resolvers = {
       });
       return { token, user };
     },
-  },
 
     saveBook: async (_: unknown, { bookData }: BookInput, context: Context) => {
       if (!context.user) {
@@ -130,7 +125,29 @@ const resolvers = {
 
       return updatedUser;
     },
+    addReview: async (_: unknown, { bookId, review }: { bookId: string, review: string }, context: Context) => {
+      if (!context.user) {
+        throw new GraphQLError('Not authenticated');
+      }
+  
+      const user = await User.findOne({ _id: context.user._id });
+      if (!user) {
+        throw new GraphQLError('User not found');
+      }
+  
+      const bookIndex = user.savedBooks.findIndex(book => book.bookId === bookId);
+      if (bookIndex === -1) {
+        throw new GraphQLError('Book not found in saved books');
+      }
+  
+      user.savedBooks[bookIndex].review = review;
+      await user.save();
+  
+      return user;
+    },
   },
 };
 
+
 export default resolvers;
+
