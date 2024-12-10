@@ -7,6 +7,7 @@ interface IUser {
   email: string;
   password: string;
   savedBooks: Array<{
+    review: string;
     bookId: string;
     authors: string[];
     description: string;

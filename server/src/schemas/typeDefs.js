@@ -1,11 +1,17 @@
 const typeDefs = `#graphql
   type Book {
-    bookId: String!
-    authors: [String]
-    description: String
+    _id: ID!
     title: String!
-    image: String
-    link: String
+    author: String!
+    publishedDate: String!
+  }
+
+  type Review {
+    _id: ID!
+    bookId: ID!
+    reviewer: String!
+    rating: Int!
+    comment: String!
   }
 
   type User {
@@ -22,23 +28,30 @@ const typeDefs = `#graphql
   }
 
   input BookInput {
-    bookId: String!
-    authors: [String]
-    description: String
     title: String!
-    image: String
-    link: String
+    author: String!
+    publishedDate: String!
+  }
+
+  input ReviewInput {
+    bookId: ID!
+    reviewer: String!
+    rating: Int!
+    comment: String!
   }
 
   type Query {
     me: User
+    books: [Book]
+    reviews(bookId: ID!): [Review]
   }
 
   type Mutation {
-    login(email: String!, password: String!): Auth
     addUser(username: String!, email: String!, password: String!): Auth
-    saveBook(bookData: BookInput!): User
-    removeBook(bookId: String!): User
+    login(email: String!, password: String!): Auth
+    addBook(title: String!, author: String!, publishedDate: String!): Book
+    addReview(bookId: ID!, reviewer: String!, rating: Int!, comment: String!): Review
   }
 `;
+
 export default typeDefs;
