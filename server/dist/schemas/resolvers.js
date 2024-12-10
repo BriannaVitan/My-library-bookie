@@ -40,32 +40,31 @@ const resolvers = {
             });
             return { token, user };
         },
-    },
-    saveBook: async (_, { bookData }, context) => {
-        if (!context.user) {
-            throw new GraphQLError('Not authenticated');
-        }
-        try {
-            const updatedUser = await User.findByIdAndUpdate(context.user._id, { $addToSet: { savedBooks: bookData } }, { new: true, runValidators: true });
+        saveBook: async (_, { bookData }, context) => {
+            if (!context.user) {
+                throw new GraphQLError('Not authenticated');
+            }
+            try {
+                const updatedUser = await User.findByIdAndUpdate(context.user._id, { $addToSet: { savedBooks: bookData } }, { new: true, runValidators: true });
+                if (!updatedUser) {
+                    throw new GraphQLError('User not found');
+                }
+                return updatedUser;
+            }
+            catch (err) {
+                throw new GraphQLError('Error saving book');
+            }
+        },
+        removeBook: async (_, { bookId }, context) => {
+            if (!context.user) {
+                throw new GraphQLError('Not authenticated');
+            }
+            const updatedUser = await User.findOneAndUpdate({ _id: context.user._id }, { $pull: { savedBooks: { bookId } } }, { new: true });
             if (!updatedUser) {
                 throw new GraphQLError('User not found');
             }
             return updatedUser;
         }
-        catch (err) {
-            throw new GraphQLError('Error saving book');
-        }
-    },
-    removeBook: async (_, { bookId }, context) => {
-        if (!context.user) {
-            throw new GraphQLError('Not authenticated');
-        }
-        const updatedUser = await User.findOneAndUpdate({ _id: context.user._id }, { $pull: { savedBooks: { bookId } } }, { new: true });
-        if (!updatedUser) {
-            throw new GraphQLError('User not found');
-        }
-        return updatedUser;
-    },
+    }
 };
-;
 export default resolvers;

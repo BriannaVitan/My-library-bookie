@@ -1,13 +1,31 @@
-export interface BookType {
+export interface Rating {
+  userId: string;
+  rating: number;
+}
+
+export interface Book {
   bookId: string;
   authors: string[];
   title: string;
   description?: string;
   image?: string;
   link?: string;
-  rating?: number;
-  averageRating?: number;
-  totalRatings?: number;
+  ratings: Rating[];
+  averageRating: number;
+  totalRatings: number;
+}
+
+export interface GoogleBookResponse {
+  id: string;
+  volumeInfo: {
+    authors?: string[];
+    title: string;
+    description?: string;
+    imageLinks?: {
+      thumbnail?: string;
+    };
+    infoLink?: string;
+  };
 }
 
 export interface SavedBookIds {
