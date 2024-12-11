@@ -1,29 +1,40 @@
-import { gql } from 'apollo-server-express';
+// import { gql } from 'apollo-server-express';
 
-export const typeDefs = gql`
+// export const typeDefs = gql`
+const typeDefs = `
   type User {
     _id: ID!
     username: String!
     email: String!
-    savedBooks: [Book]!
-    bookCount: Int!
+    savedBooks: [Book]
+    bookCount: Int
   }
 
   type Book {
     bookId: String!
-    authors: [String]
-    description: String
+    authors: [String!]!
+    description: String!
     title: String!
-    image: String
+    image: String!
     link: String
-    ratings: [Int!]!  # Array to store individual ratings
+    ratings: [Rating]! 
     averageRating: Float!
     totalRatings: Int!
   }
 
   type Auth {
-    token: ID!
+    token: String!
     user: User
+  }
+    type Rating {
+    rating: Int!    
+    user: User!     
+  }
+
+  type BookRating {
+    book: Book
+
+  
   }
 
   type Query {
@@ -34,17 +45,18 @@ export const typeDefs = gql`
   type Mutation {
     login(email: String!, password: String!): Auth
     addUser(username: String!, email: String!, password: String!): Auth
-    saveBook(bookData: BookInput!): User
-    removeBook(bookId: String!): User
+    saveBook(bookId: ID!, authors: [String]!, description: String!, title: String!, image: String!, link: String): User
+    removeBook(bookId: ID!): User
     rateBook(bookId: String!, rating: Int!): Book
   }
 
   input BookInput {
-    bookId: String!
-    authors: [String]
-    description: String
+    bookId: ID!
+    authors: [String]!
+    description: String!
     title: String!
-    image: String
+    image: String!
     link: String
   }
 `;
+export default typeDefs;

@@ -1,102 +1,168 @@
-import React, { useState } from 'react';  
+
+// import React, { useState } from 'react';  
+import { useState, useEffect } from 'react';
+import type { FormEvent } from 'react';
 import { Container, Col, Form, Button, Card, Row } from 'react-bootstrap';  
 import { useMutation } from '@apollo/client';  
 import { SAVE_BOOK, RATE_BOOK } from '../utils/mutations';  
 import Auth from '../utils/auth';  
 import LoadingSpinner from '../components/LoadingSpinner/LoadingSpinner';  
+import { searchGoogleBooks } from '../utils/API';
+import { saveBookIds, getSavedBookIds } from '../utils/localStorage';
 import StarRating from '../components/StarRating/StarRating';  
-import { Book, GoogleBookResponse, Rating } from '../models/Book';
+// import { Book, GoogleBookResponse, BookType, SavedBookIds Rating } from '../models/Book';
+import { Book, Rating } from '../models/Book';
+import type { GoogleAPIBook } from '../models/GoogleAPIBook'; 
+
   
 const SearchBooks = () => {  
   const [searchInput, setSearchInput] = useState('');  
   const [searchedBooks, setSearchedBooks] = useState<Book[]>([]);  
   const [loading, setLoading] = useState(false);  
-  const [savedBookIds, setSavedBookIds] = useState<string[]>([]);  
-  
+  const [savedBookIds, setSavedBookIds] = useState(getSavedBookIds());
+
+   // set up useEffect hook to save `savedBookIds` list to localStorage on component unmount
+  // learn more here: https://reactjs.org/docs/hooks-effect.html#effects-with-cleanup
+  useEffect(() => {
+    return () => saveBookIds(savedBookIds);
+  });
+
   // Set up mutations  
   const [saveBook] = useMutation(SAVE_BOOK);  
-  const [rateBook] = useMutation(RATE_BOOK);  
+  // const [rateBook] = useMutation(RATE_BOOK);  
   
   // Handle form submission  
-  const handleFormSubmit = async (event: React.FormEvent) => {  
-   event.preventDefault();  
+  const handleFormSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!searchInput) {
+      throw new Error('Search input missing!');
+    }
+
+    try {
+      const response = await searchGoogleBooks(searchInput);
+
+      if (!response.ok) {
+        throw new Error('something went wrong!');
+      }
+
+      const { items } = await response.json();
+
+      const bookData = items.map((book: GoogleAPIBook) => ({
+        bookId: book.id,
+        authors: book.volumeInfo.authors || ['No author to display'],
+        title: book.volumeInfo.title,
+        description: book.volumeInfo.description,
+        image: book.volumeInfo.imageLinks?.thumbnail || '',
+        link: book.volumeInfo.infoLink,  
+          ratings: [], // Initialize ratings  
+        averageRating: 0,  
+            totalRatings: 0,  
+          }));  
+     
+
+  //  try {  
+  //   setLoading(true);  
+  //   const response = await fetch(  
+  //     `https://www.googleapis.com/books/v1/volumes?q=${searchInput}`  
+  //   );  
   
-   if (!searchInput) {  
-    return;  
-   }  
+  //   if (!response.ok) {  
+  //     throw new Error('Something went wrong!');  
+  //   }  
   
-   try {  
-    setLoading(true);  
-    const response = await fetch(  
-      `https://www.googleapis.com/books/v1/volumes?q=${searchInput}`  
-    );  
+  //   const { items } = await response.json();  
   
-    if (!response.ok) {  
-      throw new Error('Something went wrong!');  
-    }  
-  
-    const { items } = await response.json();  
-  
-    const bookData = items.map((book: GoogleBookResponse) => ({  
-      bookId: book.id,  
-      authors: book.volumeInfo.authors || ['No author to display'],  
-      title: book.volumeInfo.title,  
-      description: book.volumeInfo.description,  
-      image: book.volumeInfo.imageLinks?.thumbnail || '',  
-      link: book.volumeInfo.infoLink,  
-      ratings: [], // Initialize ratings  
-      averageRating: 0,  
-      totalRatings: 0,  
-    }));  
+  //   const bookData = items.map((book: GoogleBookResponse) => ({  
+  //     bookId: book.id,  
+  //     authors: book.volumeInfo.authors || ['No author to display'],  
+  //     title: book.volumeInfo.title,  
+  //     description: book.volumeInfo.description,  
+  //     image: book.volumeInfo.imageLinks?.thumbnail || '',  
+  //     link: book.volumeInfo.infoLink,  
+  //     ratings: [], // Initialize ratings  
+  //     averageRating: 0,  
+  //     totalRatings: 0,  
+  //   }));  
   
     setSearchedBooks(bookData);  
     setSearchInput('');  
+    return;
    } catch (err) {  
     console.error(err);  
-   } finally {  
-    setLoading(false);  
+  //  } finally {  
+  //   setLoading(false);  
    }  
   };  
   
   // Handle saving a book  
   const handleSaveBook = async (bookId: string) => {  
-   const bookToSave = searchedBooks.find((book) => book.bookId === bookId);  
-   const token = Auth.loggedIn() ? Auth.getToken() : null;  
+    const bookToSave: Book = searchedBooks.find((book) => book.bookId === bookId)!;
+
+    // get token
+    const token = Auth.loggedIn() ? Auth.getToken() : null;
   
-   if (!token || !bookToSave) {  
-    return;  
-   }  
+    if (!token) {
+      throw new Error('token is missing!');
+    }
+
+    try {
+      // saveBook mutation takes in mutiple variables directly
+      // this means that to pass the variables, must use the below syntax
+      console.log(JSON.stringify(bookToSave));
+      const response = await saveBook({variables: {...bookToSave}});
+
+      if (!response) {
+        throw new Error('something went wrong!');
+      }
+
+      // if book successfully saves to user's account, save book id to state
+      setSavedBookIds([...savedBookIds, bookToSave.bookId]);
+      return;
+    } catch (err) {
+      console.error(err);
+    }
+  };
+  //  if (!token || !bookToSave) {  
+  //   return;  
+  //  }  
   
-   try {  
-    await saveBook({  
-      variables: { bookData: bookToSave },  
-    });  
+  //  try {  
+  //   await saveBook({  
+  //     variables: { bookData: bookToSave },  
+  //   });  
   
-    setSavedBookIds([...savedBookIds, bookToSave.bookId]);  
-   } catch (err) {  
-    console.error(err);  
-   }  
-  };  
+  //   setSavedBookIds([...savedBookIds, bookToSave.bookId]);  
+  //  } catch (err) {  
+  //   console.error(err);  
+  //  }  
+  // };  
   
-  // Handle rating a book  
-  const handleRateBook = async (bookId: string, rating: number) => {  
-   try {  
-    const { data } = await rateBook({  
-      variables: { bookId, rating },  
-    });  
-  
-    const updatedBook = data.rateBook;  
-  
-    // Update the book in the local state  
-    setSearchedBooks((prevBooks) =>  
-      prevBooks.map((book) =>  
-       book.bookId === bookId ? { ...book, ...updatedBook } : book  
-      )  
-    );  
-   } catch (err) {  
-    console.error(err);  
-   }  
-  };  
+  // Handle rating a book
+  const handleRateBook = async (bookId: string, rating: number) => {
+    const [rateBook] = useMutation(RATE_BOOK);
+   try {
+    const { data } = await rateBook({
+      variables: { bookId, rating },
+    });
+
+    const updatedBook = data.rateBook;
+
+//     console.log('Book rated successfully:', data.rateBook);
+//   } catch (error) {
+//     console.error('Error rating book:', error);
+//   }
+// };
+    // Update the book in the local state
+    setSearchedBooks((prevBooks) =>
+      prevBooks.map((book) =>
+       book.bookId === bookId ? { ...book, ...updatedBook } : book
+      )
+    );
+   } catch (err) {
+    console.error(err);
+   }
+  };
   
   return (  
    <div className="fade-in">  

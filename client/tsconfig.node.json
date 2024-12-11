@@ -1,11 +1,24 @@
 {
   "compilerOptions": {
-    "types": ["node", "dotenv"],
     "composite": true,
     "skipLibCheck": true,
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "allowSyntheticDefaultImports": true
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "typeRoots": ["./node_modules/@types", "./src/types"]
   },
   "include": ["vite.config.ts"]
 }
+
+// {
+//   "compilerOptions": {
+//     "types": ["node", "dotenv"],
+//     "composite": true,
+//     "skipLibCheck": true,
+//     "module": "ESNext",
+//     "moduleResolution": "bundler",
+//     "allowSyntheticDefaultImports": true
+//   },
+//   "include": ["vite.config.ts"]
+// }

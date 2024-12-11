@@ -1,27 +1,41 @@
-import React from 'react';
-import { Routes, Route } from 'react-router-dom';
-import Navbar from './components/Navbar';
-<<<<<<< HEAD
-=======
-import SearchBooks from './pages/SearchBooks';
 import './App.css';
->>>>>>> 08a4a89a73adfb3298c0352d1be62a5fcc3db371
+import { Outlet } from 'react-router-dom';
+import {ApolloClient, InMemoryCache, ApolloProvider, createHttpLink} from '@apollo/client';
+import { setContext } from '@apollo/client/link/context';
+import Navbar from './components/Navbar';
+
+const httpLink = createHttpLink({
+  uri: '/graphql',
+});
+
+// Construct request middleware that will attach the JWT token to every request as an `authorization` header
+const authLink = setContext((_, { headers }) => {
+  // get the authentication token from local storage if it exists
+  const token = localStorage.getItem('id_token');
+  // return the headers to the context so httpLink can read them
+  return {
+    headers: {
+      ...headers,
+      authorization: token ? `Bearer ${token}` : '',
+    },
+  };
+});
+console.log(authLink);
+const client = new ApolloClient({
+  // Set up our client to execute the `authLink` middleware prior to making the request to our GraphQL API
+  link: authLink.concat(httpLink),
+  cache: new InMemoryCache(),
+});
+
 
 function App() {
   return (
-    <div className="App">
+    <ApolloProvider client={client}>
+    <>
       <Navbar />
-<<<<<<< HEAD
-      <main>
-        <h1>Welcome to My Library Bookie</h1>
-      </main>
-=======
-      <Routes>
-        <Route path="/" element={<SearchBooks />} />
-        {/* Add other routes as needed */}
-      </Routes>
->>>>>>> 08a4a89a73adfb3298c0352d1be62a5fcc3db371
-    </div>
+      <Outlet />
+    </>
+    </ApolloProvider>
   );
 }
 

@@ -1,22 +1,34 @@
 import { Schema, model } from 'mongoose';
 import bcrypt from 'bcrypt';
+import type { IBook }  from './Book.js';
+import { bookSchema } from './Book.js';
+
+
+// import type IBook from './Book.js'; reopen if savedBooks: BookDocument is needed.
 
 // Define the interface for User document
-interface IUser {
+export interface IUser {
+  id: string;
   username: string;
   email: string;
   password: string;
-  savedBooks: Array<{
-    review: string;
-    bookId: string;
-    authors: string[];
-    description: string;
-    title: string;
-    image: string;
-    link: string;
-  }>;
+  // savedBooks: IBook[]; maybe use if below doesnt work.
+  savedBooks?: IBook[];
   isCorrectPassword(password: string): Promise<boolean>;
+  bookCount?: number;
 }
+  // savedBooks: Array<{
+  //   review: string;
+  //   bookId: string;
+  //   authors: string[];
+  //   description: string;
+  //   title: string;
+  //   image: string;
+  //   link: string;
+  // }>;
+  // isCorrectPassword(password: string): Promise<boolean>;
+  // bookCount: number;
+
 
 const userSchema = new Schema<IUser>({
   username: {
@@ -34,27 +46,42 @@ const userSchema = new Schema<IUser>({
     type: String,
     required: true,
   },
-  savedBooks: [{
-    bookId: {
-      type: String,
-      required: true,
+  // set savedBooks to be an array of data that adheres to the bookSchema
+  savedBooks: [
+    {
+      type: bookSchema
     },
-    authors: [String],
-    description: {
-      type: String,
-    },
-    title: {
-      type: String,
-      required: true,
-    },
-    image: {
-      type: String,
-    },
-    link: {
-      type: String,
-    },
-  }],
-});
+  ],
+},
+// set this to use virtual below
+{
+  toJSON: {
+    virtuals: true,
+  },
+}
+);
+//   },
+//   savedBooks: [{
+//     bookId: {
+//       type: String,
+//       required: true,
+//     },
+//     authors: [String],
+//     description: {
+//       type: String,
+//     },
+//     title: {
+//       type: String,
+//       required: true,
+//     },
+//     image: {
+//       type: String,
+//     },
+//     link: {
+//       type: String,
+//     },
+//   }],
+// });
 
 // Hash password before saving
 userSchema.pre('save', async function (next) {
@@ -65,11 +92,17 @@ userSchema.pre('save', async function (next) {
   next();
 });
 
-// Custom method to compare and validate password
-userSchema.methods.isCorrectPassword = async function (password: string): Promise<boolean> {
-  return bcrypt.compare(password, this.password);
+// custom method to compare and validate password for logging in
+userSchema.methods.isCorrectPassword = async function (password: string) {
+  return await bcrypt.compare(password, this.password);
 };
 
+// when we query a user, we'll also get another field called `bookCount` with the number of saved books we have
+userSchema.virtual('bookCount').get(function () {
+  return this.savedBooks?.length || 0;
+});
+
+// create model in db
 const User = model<IUser>('User', userSchema);
 
 export default User;

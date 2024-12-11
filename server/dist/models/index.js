@@ -1,2 +1,3 @@
 import User from './User.js';
-export default { User };
+import { Book } from './Book.js';
+export { User, Book };
