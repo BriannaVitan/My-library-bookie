@@ -1,13 +1,13 @@
-import { Schema, model, Document } from 'mongoose';
+import { Schema, model } from "mongoose";
 
-interface IBook extends Document {
+export interface IBook {
   bookId: string;
   authors: string[];
   description: string;
   title: string;
   image: string;
   link: string;
-  ratings: number[];
+  ratings: { rating: number; user: string }[];
   averageRating: number;
   totalRatings: number;
 }
@@ -16,9 +16,12 @@ const bookSchema = new Schema<IBook>({
   bookId: {
     type: String,
     required: true,
-    unique: true,
   },
-  authors: [String],
+  authors: [
+    {
+      type: String,
+    },
+  ],
   description: String,
   title: {
     type: String,
@@ -26,10 +29,12 @@ const bookSchema = new Schema<IBook>({
   },
   image: String,
   link: String,
-  ratings: {
-    type: [Number],
-    default: [],
-  },
+  ratings: [
+    {
+      rating: { type: Number, required: true },
+      user: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    },
+  ],
   averageRating: {
     type: Number,
     default: 0,
@@ -40,6 +45,6 @@ const bookSchema = new Schema<IBook>({
   },
 });
 
-const Book = model<IBook>('Book', bookSchema);
+const Book = model<IBook>("Book", bookSchema);
 
-export { Book };
+export { bookSchema, Book };

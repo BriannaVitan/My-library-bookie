@@ -4,15 +4,26 @@ export interface Rating {
   rating: number;
 }
 
-
 export interface Book {
-  authors: string[],
+  totalRatings: ReactNode;
+  authors: string[];
   description: string;
   bookId: string;
   image: string;
   link: string;
   title: string;
+  ratings: Rating[];
+
 }
+
+// export interface Book {
+//   authors: string[],
+//   description: string;
+//   bookId: string;
+//   image: string;
+//   link: string;
+//   title: string;
+// }
 
 export interface BookType {
   bookId: string;

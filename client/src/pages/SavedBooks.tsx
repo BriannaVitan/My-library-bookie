@@ -1,18 +1,19 @@
 import { useQuery, useMutation } from '@apollo/client';
 import { Container, Card, Button, Row, Col } from 'react-bootstrap';
-import { GET_ME } from '../utils/queries'; 
-import { REMOVE_BOOK } from '../utils/mutations'; 
+import { GET_ME } from '../utils/queries'; // Make sure this query is defined
+import { REMOVE_BOOK } from '../utils/mutations'; // Make sure this mutation is defined
 import Auth from '../utils/auth';
 import { removeBookId } from '../utils/localStorage';
 import type { User } from '../models/User';
 import type { Book } from '../models/Book';
 
 const SavedBooks = () => {
+  // Query user data
   const { loading, data, error, refetch } = useQuery<{ me: User }>(GET_ME);
   const userData = data?.me || { username: '', email: '', password: '', savedBooks: [] };
   console.log('Response from Apollo GET_ME query:', { loading, data, error });
   console.log('userData from GET_ME',userData);
-
+  // Mutation to remove book
   const [removeBook] = useMutation(REMOVE_BOOK, {
     update(cache, { data: { removeBook } }) {
       // Read the current GET_ME query from the cache
@@ -33,6 +34,7 @@ const SavedBooks = () => {
       }
     },
     onCompleted: () => {
+      // Refetch user data after mutation complete
       refetch();
     }
   });

@@ -1,46 +1,101 @@
-interface DecodedToken {
+// use this to decode a token and get the user's information out of it
+import { jwtDecode } from 'jwt-decode';
+
+interface UserToken {
+  name: string;
   exp: number;
-  data: {
-    _id: string;
-    username: string;
-    email: string;
-  };
 }
 
-class Auth {
-  public getToken() {
-    return localStorage.getItem('id_token');
+// create a new class to instantiate for a user
+class AuthService {
+  // get user data
+  getProfile() {
+    return jwtDecode(this.getToken() || '');
   }
 
-  public getProfile() {
-    const token = this.getToken();
-    if (!token) return null;
-    try {
-      return JSON.parse(atob(token.split('.')[1])) as DecodedToken;
-    } catch (err) {
-      console.error('Error decoding token:', err);
-      return null;
-    }
-  }
-
+  // check if user's logged in
   loggedIn() {
+    // Checks if there is a saved token and it's still valid
     const token = this.getToken();
-    return token && !this.isTokenExpired(token);
+    return !!token && !this.isTokenExpired(token); // handwaiving here
   }
 
-  logout(): void {
-    localStorage.removeItem('id_token');
-    window.location.assign('/');
-  }
-
-  private isTokenExpired(token: string): boolean {
+  // check if token is expired
+  isTokenExpired(token: string) {
     try {
-      const decoded = JSON.parse(atob(token.split('.')[1])) as DecodedToken;
-      return decoded.exp < Date.now() / 1000;
-    } catch (_err) {
+      const decoded = jwtDecode<UserToken>(token);
+      if (decoded.exp < Date.now() / 1000) {
+        return true;
+      } 
+      
+      return false;
+    } catch (err) {
       return false;
     }
   }
+
+  getToken() {
+    // Retrieves the user token from localStorage
+    return localStorage.getItem('id_token');
+  }
+
+  login(idToken: string) {
+    // Saves user token to localStorage
+    localStorage.setItem('id_token', idToken);
+    window.location.assign('/');
+  }
+
+  logout() {
+    // Clear user token and profile data from localStorage
+    localStorage.removeItem('id_token');
+    // this will reload the page and reset the state of the application
+    window.location.assign('/');
+  }
 }
 
-export default new Auth();
+export default new AuthService();
+
+// import { jwtDecode } from 'jwt-decode';
+
+// interface UserToken {
+//   name: string;
+//   exp: number;
+// }
+
+// class Auth {
+//   public getToken() {
+//     return localStorage.getItem('id_token');
+//   }
+
+//   public getProfile() {
+//     const token = this.getToken();
+//     if (!token) return null;
+//     try {
+//       return JSON.parse(atob(token.split('.')[1])) as UserToken;
+//     } catch (err) {
+//       console.error('Error decoding token:', err);
+//       return null;
+//     }
+//   }
+
+//   loggedIn() {
+//     const token = this.getToken();
+//     return token && !this.isTokenExpired(token);
+//   }
+
+//   logout(): void {
+//     localStorage.removeItem('id_token');
+//     window.location.assign('/');
+//   }
+
+//   private isTokenExpired(token: string): boolean {
+//     try {
+//       const decoded = JSON.parse(atob(token.split('.')[1])) as DecodedToken;
+//       return decoded.exp < Date.now() / 1000;
+//     } catch (_err) {
+//       return false;
+//     }
+//   }
+// }
+
+// export default new Auth();
